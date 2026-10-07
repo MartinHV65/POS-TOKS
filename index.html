@@ -218,6 +218,19 @@
             .right-panel { position: absolute; left: 0; top: 0; width: 100%; background: white; }
             .ticket-wrapper { box-shadow: none; width: 100%; }
         }
+		/* Ocultar el panel izquierdo del JSON */
+.left-panel, #json-editor-container {
+    display: none !important;
+}
+
+/* Forzar a que la vista previa ocupe el área central o completa */
+.ticket-preview-container, #preview-panel {
+    width: 100% !important;
+    max-width: 450px; /* Ancho estándar de un ticket POS de 80mm */
+    margin: 0 auto;   /* Centrar la vista previa en la pantalla */
+    padding: 20px;
+}
+
     </style>
 </head>
 <body>
@@ -542,6 +555,7 @@ function generarYGuardarEnlace() {
 
         cargarTicketDesdeURL();
         actualizarVistaHistorial();
+
     </script>
 </body>
 </html>
