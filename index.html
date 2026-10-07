@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Tickets - Formato POS/TOKS</title>
+    <style>
+        :root {
+            --bg-color: #f4f5f7;
+            --panel-bg: #ffffff;
+            --text-color: #333333;
+            --primary-color: #4f46e5;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .left-panel {
+            border-right: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+            max-width: 50%;
+        }
+
+        .right-panel {
+            background-color: #e5e7eb;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #4b5563;
+        }
+
+        textarea {
+            height: 300px;
+            width: 100%;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            resize: vertical;
+            background-color: #f9fafb;
+            margin-bottom: 15px;
+        }
+
+        textarea:focus {
+            outline: 2px solid var(--primary-color);
+        }
+
+        .actions-menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .btn-primary { background-color: var(--primary-color); }
+        .btn-primary:hover { background-color: #4338ca; }
+        
+        .btn-success { background-color: var(--success-color); }
+        .btn-success:hover { background-color: #059669; }
+
+        .share-container {
+            background-color: #e0f2fe;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #bae6fd;
+            display: none;
+            margin-bottom: 15px;
+        }
+
+        .share-container input {
+            width: 100%;
+            padding: 8px;
+            font-size: 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            margin-top: 5px;
+            background-color: #fff;
+        }
+
+        .history-section {
+            margin-top: 15px;
+            border-top: 2px solid var(--border-color);
+            padding-top: 15px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f9fafb;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .history-item:hover {
+            border-color: #cbd5e1;
+            background-color: #f1f5f9;
+        }
+
+        .history-details { cursor: pointer; flex: 1; }
+        .history-actions { display: flex; gap: 6px; }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-small-load { background-color: #e0f2fe; color: #0369a1; }
+        .btn-clear-all { background-color: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; font-size: 12px; padding: 4px 10px;}
+
+        /* --- Estilo de Impresión Térmica Estable --- */
+        .ticket-wrapper {
+            background: white;
+            width: 340px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            color: #000;
+            line-height: 1.3;
+            box-sizing: border-box;
+        }
+
+        .ticket-header { text-align: center; margin-bottom: 10px; }
+        .ticket-title { font-size: 16px; font-weight: bold; text-transform: uppercase; }
+        .separator { border-top: 1px dashed #000; margin: 8px 0; }
+        .ticket-info p { display: flex; justify-content: space-between; font-size: 12px; }
+        
+        .ticket-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .ticket-table th { border-bottom: 1px dashed #000; text-align: left; font-size: 12px; padding-bottom: 4px; }
+        .ticket-table td { padding: 4px 0; vertical-align: top; font-size: 12px; }
+        .text-right { text-align: right; }
+        
+        .discount-line { font-size: 11px; font-style: italic; color: #333; padding-left: 10px; }
+        
+        .ticket-totals p { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px; }
+        .ticket-totals .grand-total { font-size: 14px; font-weight: bold; margin-top: 4px; }
+        .ticket-footer { text-align: center; margin-top: 15px; font-size: 11px; }
+
+        .error-msg { color: #dc2626; font-weight: bold; margin-bottom: 10px; display: none; }
+
+        @media print {
+            body * { visibility: hidden; }
+            .right-panel, .ticket-wrapper, .ticket-wrapper * { visibility: visible; }
+            .right-panel { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+            .ticket-wrapper { box-shadow: none; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>🎫 Visor de Tickets POS - Formato Toks</header>
+
+    <div class="container">
+        <div class="panel left-panel">
+            <label for="json-input">Estructura JSON (POS / TOKS):</label>
+            <div id="error-box" class="error-msg">Error de sintaxis en el JSON. Compruébalo.</div>
+            <textarea id="json-input" placeholder="Pega el esquema JSON aquí..."></textarea>
+            
+            <div class="actions-menu">
+                <button class="btn btn-primary" onclick="imprimirYGuardar()">🖨️ Imprimir</button>
+                <button class="btn btn-success" onclick="generarYGuardarEnlace()">🔗 Compartir (URL 10 Caracteres)</button>
+            </div>
+
+            <div id="share-box" class="share-container">
+                <label style="font-size: 13px; margin: 0; color: #0369a1; font-weight: bold;">¡Enlace copiado al portapapeles!</label>
+                <input type="text" id="share-url" readonly onclick="this.select()">
+            </div>
+
+            <div class="history-section">
+                <div class="history-header">
+                    <label style="margin: 0;">📋 Historial Local Reciente</label>
+                    <button class="btn-small btn-clear-all" onclick="limpiarTodoElHistorial()">🗑️ Limpiar</button>
+                </div>
+                <div id="history-list" class="history-list"></div>
+            </div>
+        </div>
+
+        <div class="panel right-panel">
+            <div class="ticket-wrapper" id="ticket">
+                <div style="text-align: center; color: #666; font-style: italic; margin-top: 50px;">
+                    Cargando esquema...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const jsonEjemplo = {
+            "descuentos": [
+                { "tipo_desc": 4, "id_desc": 1, "contador": 1, "porcentaje": 10.0000, "desc_con": "INSEN / INAPAM", "m_desc": 23.9000, "m_total": 239.0000, "id_ord": 20, "id_pro": "12506", "id_pos": 1 },
+                { "tipo_desc": 4, "id_desc": 1, "contador": 1, "porcentaje": 10.0000, "desc_con": "INSEN / INAPAM", "m_desc": 8.9000, "m_total": 89.0000, "id_ord": 30, "id_pro": "435", "id_pos": 2 },
+                { "tipo_desc": 4, "id_desc": 1, "contador": 1, "porcentaje": 10.0000, "desc_con": "INSEN / INAPAM", "m_desc": 16.9000, "m_total": 169.0000, "id_ord": 40, "id_pro": "117", "id_pos": 2 }
+            ],
+            "descuentos_conceptos": [
+                { "concepto": "INSEN / INAPAM", "porcentaje_item": 30.0000, "porcentaje_concepto": 30.0000, "importe_concepto": 49.7000, "importe": 49.7000, "aplicado": 1 }
+            ],
+            "productos": [
+                { "fecha": 46301, "id_local": 68, "id_term": 5, "id_coma": 601, "id_ord": 10, "hora": "2026-10-06 19:08:25", "id_pro": 10587, "producto": "Pan De Salvado", "emp": "FERNANDEZ/ESCALNTE/MYRNA ANGEL", "porciones": 2, "precio_unit": 0.0000, "m_importe": 0.0000, "m_desc": 0.0000, "m_total": 0.0000, "m_imp1": 0.0000 },
+                { "fecha": 46301, "id_local": 68, "id_term": 5, "id_coma": 601, "id_ord": 21, "hora": "2026-10-06 19:08:41", "id_pro": 13906, "producto": "Agua Piña Coco", "emp": "FERNANDEZ/ESCALNTE/MYRNA ANGEL", "porciones": 1, "precio_unit": 0.0000, "m_importe": 0.0000, "m_desc": 0.0000, "m_total": 0.0000, "m_imp1": 0.0000 },
+                { "fecha": 46301, "id_local": 68, "id_term": 5, "id_coma": 601, "id_ord": 20, "hora": "2026-10-06 19:08:41", "id_pro": 12506, "producto": "Hamb Ofrenda", "emp": "FERNANDEZ/ESCALNTE/MYRNA ANGEL", "porciones": 1, "precio_unit": 239.0000, "m_importe": 239.0000, "m_desc": 23.9000, "m_total": 215.1000, "m_imp1": 29.6690, "m_neto": 185.4310 },
+                { "fecha": 46301, "id_local": 68, "id_term": 5, "id_coma": 601, "id_ord": 30, "hora": "2026-10-06 19:09:04", "id_pro": 435, "producto": "Limonada GDE", "emp": "FERNANDEZ/ESCALNTE/MYRNA ANGEL", "porciones": 1, "precio_unit": 89.0000, "m_importe": 89.0000, "m_desc": 8.9000, "m_total": 80.1000, "m_imp1": 11.0483, "m_neto": 69.0517 },
+                { "fecha": 46301, "id_local": 68, "id_term": 5, "id_coma": 601, "id_ord": 40, "hora": "2026-10-06 19:09:22", "id_pro": 117, "producto": "Molletes Naturales", "emp": "FERNANDEZ/ESCALNTE/MYRNA ANGEL", "porciones": 1, "precio_unit": 169.0000, "m_importe": 169.0000, "m_desc": 16.9000, "m_total": 152.1000, "m_imp1": 20.9793, "m_neto": 131.1207 }
+            ],
+            "formasPago": [
+                { "tiempo": "2026-10-06 20:09:06", "id_fpgo": 12, "abono_mn": 447.3000, "forma_pago": "DEBITO CAR", "referencia": "XXXXXXXXXXXX8485", "num_ticket": "46301068560100" }
+            ],
+            "ticket": [
+                { "num_ticket": "46301068560100", "monto_ticket": 447.3000, "marca": "TOKS", "plataforma": "POS", "fecha_consumo": "2026-10-06 19:08:22", "vendedor": "FERNANDEZ/ESCALNTE/MYRNA ANGEL", "mesa": "24", "personas": 2, "monto_ticket_letra": "(CUATROCIENTOS CUARENTA Y SIETE PESOS 30/100 M.N)", "calle": "Av. Ejercito Nacional Mexicano 769 Torre B Piso 10", "colonia": "Granada", "delegacion": "Miguel Hidalgo", "ciudad": "Ciudad de Mexico, Mexico", "cp": "11520 Ciudad de Mexico" }
+            ]
+        };
+
+        const jsonInput = document.getElementById('json-input');
+        const errorBox = document.getElementById('error-box');
+        const ticketContainer = document.getElementById('ticket');
+        const shareBox = document.getElementById('share-box');
+        const shareUrlInput = document.getElementById('share-url');
+        const historyListContainer = document.getElementById('history-list');
+
+        function cargarTicketDesdeURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shortToken = urlParams.get('s');
+            
+            if (shortToken && shortToken.length === 10) {
+                const dbTickets = JSON.parse(localStorage.getItem('db_links')) || {};
+                if (dbTickets[shortToken]) {
+                    jsonInput.value = JSON.stringify(dbTickets[shortToken], null, 4);
+                } else {
+                    alert("Ticket no localizado localmente.");
+                    jsonInput.value = JSON.stringify(jsonEjemplo, null, 4);
+                }
+            } else {
+                jsonInput.value = JSON.stringify(jsonEjemplo, null, 4);
+            }
+            renderTicket();
+        }
+
+        jsonInput.addEventListener('input', () => {
+            shareBox.style.display = 'none';
+            renderTicket();
+        });
+
+        function renderTicket() {
+            try {
+                const data = JSON.parse(jsonInput.value);
+                errorBox.style.display = 'none';
+
+                const tNode = (data.ticket && data.ticket[0]) ? data.ticket[0] : {};
+                const pNode = (data.formasPago && data.formasPago[0]) ? data.formasPago[0] : {};
+
+                const marca = tNode.marca || "REST-POS";
+                const numTicket = tNode.num_ticket || pNode.num_ticket || "S/N";
+                const fecha = tNode.fecha_consumo || pNode.tiempo || new Date().toLocaleString();
+                const vendedor = tNode.vendedor || "CAJERO";
+                const mesa = tNode.mesa || "-";
+                const personas = tNode.personas || "0";
+                
+                const calle = tNode.calle || "";
+                const colonia = tNode.colonia || "";
+                const ciudad = tNode.ciudad || "";
+                const cp = tNode.cp || "";
+
+                let productosHTML = '';
+                let acumuladoSubtotal = 0;
+                let acumuladoIVA = 0;
+                let acumuladoDescuentos = 0;
+
+                if (data.productos && Array.isArray(data.productos)) {
+                    data.productos.forEach(prod => {
+                        const cant = prod.porciones || 1;
+                        const desc = prod.producto || "Artículo";
+                        
+                        const baseImporte = prod.m_importe !== undefined ? prod.m_importe : (cant * (prod.precio_unit || 0));
+                        const totalItem = prod.m_total !== undefined ? prod.m_total : baseImporte;
+                        const descuentoItem = prod.m_desc || 0;
+                        const ivaItem = prod.m_imp1 || 0;
+
+                        acumuladoSubtotal += (totalItem - ivaItem);
+                        acumuladoIVA += ivaItem;
+                        acumuladoDescuentos += descuentoItem;
+
+                        productosHTML += `
+                            <tr>
+                                <td>${cant} x ${desc}</td>
+                                <td class="text-right">$${baseImporte.toFixed(2)}</td>
+                            </tr>
+                        `;
+
+                        if (descuentoItem > 0) {
+                            const descMotivo = data.descuentos ? data.descuentos.find(d => String(d.id_pro) === String(prod.id_pro)) : null;
+                            const nombreDesc = descMotivo ? descMotivo.desc_con : "Desc. Aplicado";
+                            
+                            productosHTML += `
+                                <tr>
+                                    <td colspan="2" class="discount-line">  └─ ${nombreDesc} (-$${descuentoItem.toFixed(2)})</td>
+                                </tr>
+                            `;
+                        }
+                    });
+                }
+
+                const granTotal = tNode.monto_ticket || pNode.abono_mn || (acumuladoSubtotal + acumuladoIVA);
+                const totalLetra = tNode.monto_ticket_letra || "";
+                const metodoPago = pNode.forma_pago || "EFECTIVO";
+                const tarjetaRef = pNode.referencia ? `Ref: ${pNode.referencia}` : "";
+
+                ticketContainer.innerHTML = `
+                    <div class="ticket-header">
+                        <div class="ticket-title">${marca}</div>
+                        <div style="font-size:10px;">${calle}</div>
+                        <div style="font-size:10px;">Col. ${colonia}, CP: ${cp}</div>
+                        <div style="font-size:10px;">${ciudad}</div>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="ticket-info">
+                        <p><span>TICKET:</span> <span>${numTicket}</span></p>
+                        <p><span>FECHA:</span> <span>${fecha}</span></p>
+                        <p><span>MESERO:</span> <span>${vendedor}</span></p>
+                        <p><span>MESA: ${mesa}</span> <span>PERSONAS: ${personas}</span></p>
+                    </div>
+                    <div class="separator"></div>
+                    <table class="ticket-table">
+                        <thead>
+                            <tr>
+                                <th>DESCRIPCIÓN</th>
+                                <th class="text-right">IMPORTE</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${productosHTML}
+                        </tbody>
+                    </table>
+                    <div class="separator"></div>
+                    <div class="ticket-totals">
+                        <p><span>SUBTOTAL NETO:</span> <span>$${acumuladoSubtotal.toFixed(2)}</span></p>
+                        ${acumuladoDescuentos > 0 ? `<p><span>TOTAL DESC.:</span> <span>-$${acumuladoDescuentos.toFixed(2)}</span></p>` : ''}
+                        <p><span>I.V.A. (16%):</span> <span>$${acumuladoIVA.toFixed(2)}</span></p>
+                        <div class="separator"></div>
+                        <p class="grand-total"><span>TOTAL M.N.:</span> <span>$${Number(granTotal).toFixed(2)}</span></p>
+                    </div>
+                    <div style="font-size:9px; margin-top:5px; font-style:italic; text-align:center;">
+                        ${totalLetra}
+                    </div>
+                    <div class="separator"></div>
+                    <div class="ticket-info">
+                        <p><span>FORMA PAGO:</span> <span>${metodoPago}</span></p>
+                        ${tarjetaRef ? `<p><span>TARJETA:</span> <span>${tarjetaRef}</span></p>` : ''}
+                    </div>
+                    <div class="ticket-footer">
+                        <p>¡Gracias por su consumo!<br>Este no es un comprobante fiscal.</p>
+                    </div>
+                `;
+            } catch (e) {
+                errorBox.style.display = 'block';
+            }
+        }
+
+        function obtenerHistorial() { return JSON.parse(localStorage.getItem('ticket_history')) || []; }
+
+        function guardarEnHistorial(data, tokenAsociado = null) {
+    let historial = obtenerHistorial();
+    
+    // CORRECCIÓN: Validar si 'ticket' y 'formasPago' son arreglos y extraer el primer elemento [0]
+    const tNode = (data.ticket && Array.isArray(data.ticket) && data.ticket.length > 0) ? data.ticket[0] : (data.ticket || {});
+    const pNode = (data.formasPago && Array.isArray(data.formasPago) && data.formasPago.length > 0) ? data.formasPago[0] : (data.formasPago || {});
+    
+    const nuevoItem = {
+        id: Date.now(),
+        ticket_nro: tNode.num_ticket || pNode.num_ticket || 'S/N',
+        empresa: tNode.marca || 'TOKS',
+        total: tNode.monto_ticket || pNode.abono_mn || 0,
+        fecha: tNode.fecha_consumo || new Date().toLocaleString(),
+        token: tokenAsociado,
+        jsonString: JSON.stringify(data)
+    };
+
+    historial.unshift(nuevoItem);
+    if (historial.length > 10) historial.pop();
+    localStorage.setItem('ticket_history', JSON.stringify(historial));
+    actualizarVistaHistorial();
+}
+        function limpiarTodoElHistorial() {
+            if (confirm("¿Vaciar registros?")) {
+                localStorage.removeItem('ticket_history');
+                actualizarVistaHistorial();
+            }
+        }
+
+        function cargarTicketHistorial(jsonString) {
+            jsonInput.value = JSON.stringify(JSON.parse(jsonString), null, 4);
+            shareBox.style.display = 'none';
+            renderTicket();
+        }
+
+        function actualizarVistaHistorial() {
+            const historial = obtenerHistorial();
+            if (historial.length === 0) {
+                historyListContainer.innerHTML = '<div style="color:#9ca3af; font-style:italic; font-size:12px; text-align:center; padding:10px;">Historial vacío.</div>';
+                return;
+            }
+
+            historyListContainer.innerHTML = '';
+            historial.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div class="history-details">
+                        <strong>#${item.ticket_nro}</strong> - ${item.empresa} <br>
+                        <span style="color:#6b7280; font-size:11px;">Mesa ${item.id ? JSON.parse(item.jsonString).ticket[0].mesa : '-'} | Total: $${Number(item.total).toFixed(2)}</span>
+                        ${item.token ? `<br><span style="color:#10b981; font-size:10px;">🔗 ID Corto: ${item.token}</span>` : ''}
+                    </div>
+                    <div class="history-actions"><button class="btn-small btn-small-load">Ver</button></div>
+                `;
+                div.querySelector('.history-details').addEventListener('click', () => cargarTicketHistorial(item.jsonString));
+                div.querySelector('.btn-small-load').addEventListener('click', () => cargarTicketHistorial(item.jsonString));
+                historyListContainer.appendChild(div);
+            });
+        }
+
+        function generarTokenAleatorio(longitud = 10) {
+            const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let resultado = '';
+            for (let i = 0; i < longitud; i++) {
+                resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+            }
+            return resultado;
+        }
+
+        
+function generarYGuardarEnlace() {
+    try {
+        // 1. Validar estrictamente la sintaxis de la caja de texto
+        const textoPlano = jsonInput.value.trim();
+        const currentJson = JSON.parse(textoPlano);
+        
+        // 2. Crear identificador de 10 caracteres
+        const tokenDiezCaracteres = generarTokenAleatorio(10);
+        
+        // 3. Almacenar el JSON mapeado
+        const dbTickets = JSON.parse(localStorage.getItem('db_links')) || {};
+        dbTickets[tokenDiezCaracteres] = currentJson;
+        localStorage.setItem('db_links', JSON.stringify(dbTickets));
+
+        // 4. Guardar en el historial usando la corrección de arreglos de TOKS/POS
+        guardarEnHistorial(currentJson, tokenDiezCaracteres);
+
+        // 5. Construir y copiar URL
+        const urlBase = window.location.origin + window.location.pathname;
+        const linkCortoCompleto = `${urlBase}?s=${tokenDiezCaracteres}`;
+        
+        shareUrlInput.value = linkCortoCompleto;
+        shareBox.style.display = 'block';
+        
+        navigator.clipboard.writeText(linkCortoCompleto).catch(err => {
+            shareUrlInput.select();
+            document.execCommand('copy');
+        });
+    } catch (e) {
+        // Mensaje de depuración por si el JSON en sí tiene un error de sintaxis previo
+        console.error("Error detallado en compartir:", e);
+        alert("Error: Comprueba que el JSON de la caja de texto sea válido y no tenga caracteres extraños.");
+    }
+}
+
+        function imprimirYGuardar() {
+            try { guardarEnHistorial(JSON.parse(jsonInput.value)); } catch(e) {}
+            window.print();
+        }
+
+        cargarTicketDesdeURL();
+        actualizarVistaHistorial();
+    </script>
+</body>
+</html>
